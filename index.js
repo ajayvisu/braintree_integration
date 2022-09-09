@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const paypal =require('paypal-rest-sdk');
 const braintree = require('braintree');
 
 
@@ -17,118 +16,16 @@ app.use(function(req, res, next) {
     next();
 });
 
-paypal.configure({
-        'mode':'sandbox',
-        'client_id': "AaNg6AKySjSMDbfZU6MyJ9U_wOchdYa5tYeMG6AiscwPpVbBSyG7hBtFWDVU24q7B9BeFBJhrSe8KyqV",
-        'client_secret': "EFfkx-7ZwgsHhzR6IJ-YQiuXuqLf2LihygRJjDvpDgInBH_MQSTLNkMavjwa_LeYP2LQGgBGZ-9gPgZv"
-    })
-    
-    
-    
-app.post('/payment', (req, res)=>{
-        try{
-            const create_payment_json = {
-                "intent": "sale",
-                "payer": {
-                    "payment_method" : "paypal"
-                },
-                "redirect_urls": {
-                    "return_url": "http://localhost:7070/success",
-                    "cancel_url": "http://localhost:7070/cancel"
-                },
-                "transactions": [{
-                    "item_list": {
-                        "items": [{
-                            "name": "rolex",
-                            "price": "5.00",
-                            "currency": "USD",
-                            "quantity": 1
-                        }]
-                    },
-                    "amount": {
-                        "currency" : "USD",
-                        "total"    : "5.00"
-                    },
-                  }]
-            };
-   
-            
-paypal.payment.create(create_payment_json, function (error, payment) {
-    if (error) {
-       throw error
-                   // return res.json(error.message)
-                } else {
-                    for(let i = 0;i < payment.links.length;i++){
-                      if(payment.links[i].rel === 'approval_url'){
-                        res.redirect(payment.links[i].href);
-                      }
-                    }
-                }
-              });
-            
-    
-        }catch(err){
-            console.log('error',err.message)
-            res.json({'err':err.message})
-        }
-    })
-    
-app.get('/success', (req, res) => {
-        const payerId = req.query.PayerID;
-        const paymentId = req.query.paymentId;
-       
-        const pay= {
-          "payer_id": payerId,
-          "transactions": [{
-              "amount": {
-                  "currency": "USD",
-                  "total": "5.00"
-              }
-          }]
-        };
-       
-
-paypal.payment.execute(paymentId, pay, function (err, payment) {
-          if (err) {
-              console.log('errorpay',err.response);
-              throw err;
-          } else {
-              console.log(JSON.stringify(payment));
-              res.send('Success');
-          }
-      });
-      });
-    
-
-    
-app.get('/cancel', (req, res) =>{
-         res.send('Cancelled')});  
-    
-    
-app.get('/', (req, res)=>{
-        res.send(`<h2>Pay<h2>
-        <form action="/payment" method="post">
-        <input type="submit" value="Buy">
-      </form>`)
-        
-    })
-
-
-
-
 
 
 const config = {
     environment:braintree.Environment.Sandbox,
-    merchantId:'nymd7nkr7tsng5sv',
-    publicKey: 'dymtjygwyyy6qg9b',
-    privateKey: 'b28bff96d38e60f99caea06516b0c069'
+    merchantId: process.env.merchantId,
+    publicKey: process.env.publicKey,
+    privateKey: process.env.privateKey
     
 };
 
-// merchantId:'z9tjysdp8gdcfhdk',
-//     publicKey: 'zhhq3nfvp3fp4pvr',
-//     privateKey: 'e4b5b94ce3fd64bc6e785076eb44bbf5'
 
 
 const gateway = new braintree.BraintreeGateway(config)
@@ -178,25 +75,25 @@ app.post('/transaction', async(req, res)=>{
 
 
 
-app.post('/refund', async(req, res)=>{
-    try {
-        const paymentDetails = gateway.transaction.submitForPartialSettlement(
-            'transaction_id',
-            'cancellation_fees',
-            (err, resData)=>{
-                if(resData.success){
-                    return res.json({'status':'success', 'message':resData.transaction})
-                }else{
-                    return res.send({err:err})
-                }
-            }
-        )
+// app.post('/refund', async(req, res)=>{
+//     try {
+//         const paymentDetails = gateway.transaction.submitForPartialSettlement(
+//             'transaction_id',
+//             'cancellation_fees',
+//             (err, resData)=>{
+//                 if(resData.success){
+//                     return res.json({'status':'success', 'message':resData.transaction})
+//                 }else{
+//                     return res.send({err:err})
+//                 }
+//             }
+//         )
 
-    } catch (error) {
-        return res.json({'status':'failed', 'message':error.message})
+//     } catch (error) {
+//         return res.json({'status':'failed', 'message':error.message})
         
-    }
-})
+//     }
+// })
 
 
 
