@@ -33,7 +33,7 @@ app.post('/transaction', async(req,res)=>{
     try {
         const paymentDetail = gateway.transaction.sale({
             amount:req.body.amount,
-            paymentMethodNonce:req.body.paymentMethodNonce,
+            paymentMethodNonce:req.body.paymentMethodNonce,  // paymentMethodNonce: nonce-from-the-client
             options:{
                 submitForSettlement:true
             }
@@ -55,3 +55,4 @@ app.listen(7575, ()=>{
 
 
 //http://localhost:7575
+
